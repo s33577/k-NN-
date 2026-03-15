@@ -6,10 +6,37 @@ import java.util.*;
 
 public class Main {
     public static void main(String[] args) {
-        double[] test = new double[] {1, 3, 4, 5};
-        double[] test2 = new double[] {9, 2, 6, 1};
-        System.out.println(distance(test, test2));
-        System.out.println(readData("/Users/and/Desktop/k-NN-/K-NN-JavaFile/src/testData/iris.data"));
+        int k = 3;
+        List<Data> train = readData("/Users/and/Desktop/k-NN-/K-NN-JavaFile/src/testData/iris.data");
+        List<Data> test = readData("/Users/and/Desktop/k-NN-/K-NN-JavaFile/src/testData/iris.test.data");
+
+        double accuracy = testAcc(train, test, k);
+        System.out.println("Accuracy: " + accuracy);
+
+        Scanner sc = new Scanner(System.in);
+
+        while (true) {
+
+            System.out.print("> ");
+            String input = sc.nextLine();
+
+            if (input.equalsIgnoreCase("exit"))
+                break;
+
+            String[] parts = input.split(",");
+            double[] features = new double[parts.length];
+
+            for (int i = 0; i < parts.length; i++) {
+                features[i] = Double.parseDouble(parts[i]);
+            }
+
+            Data newPoint = new Data(features, "");
+            String prediction = classifier(newPoint, train, k);
+
+            System.out.println("Predicted class: " + prediction);
+        }
+
+        sc.close();
     }
 
     static double distance(double[] a, double[] b) {
@@ -65,5 +92,14 @@ public class Main {
         return Collections.max(labels.entrySet(), Map.Entry.comparingByValue()).getKey();
     }
 
-
+    static double testAcc(List<Data> train, List<Data> test, int k) {
+        int correct = 0;
+        for (Data d : train) {
+            String predicted = classifier(d, train, k);
+            if (predicted.equals(d.labels)) {
+                correct++;
+            }
+        }
+        return (double) correct / test.size();
+    }
 }
