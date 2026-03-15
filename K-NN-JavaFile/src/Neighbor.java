@@ -1,8 +1,8 @@
-class NeighborData {
+class Neigbor {
     double distance;
     String labels;
 
-    NeighborData(double distance, String labels) {
+    Neigbor(double distance, String labels) {
         this.distance = distance;
         this.labels = labels;
     }

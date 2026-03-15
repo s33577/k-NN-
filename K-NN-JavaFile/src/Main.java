@@ -1,8 +1,7 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 
 public class Main {
@@ -43,6 +42,27 @@ public class Main {
             throw new RuntimeException(e);
         }
 
+    }
+
+    static String classifier(Data test, List<Data> trainSet, int k) {
+        List<Neigbor> neighbors = new ArrayList<>();
+
+        for (Data d : trainSet) {
+            double distance = distance(test.features, d.features);
+            neighbors.add(new Neigbor(distance, d.labels));
+
+        }
+        neighbors.sort(Comparator.comparingDouble(n -> n.distance));
+
+
+
+        Map<String, Integer> labels = new HashMap<>();
+        for (int i = 0; i <= k; i++) {
+            String label = neighbors.get(i).labels;
+             labels.put(label, labels.getOrDefault(label, 0) + 1);
+        }
+
+        return Collections.max(labels.entrySet(), Map.Entry.comparingByValue()).getKey();
     }
 
 
