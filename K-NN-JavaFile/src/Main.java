@@ -46,7 +46,7 @@ public class Main {
 
         sc.close();
     }
-
+    // Distance uses Euclidean distance tutorial 2. sqrt((X1 - Y1)^2 + (X2 - Y2)^2...)
     static double distance(double[] a, double[] b) {
         double sum = 0;
 
@@ -57,6 +57,8 @@ public class Main {
         return Math.sqrt(sum);
     }
 
+
+    // Retrieve features = the numeric numbers and the label = at the end of the cvs line
     static List<Point> readPoint(String filename) {
         List<Point> Point = new ArrayList<>();
         try(BufferedReader br = new BufferedReader(new FileReader(filename))) {
