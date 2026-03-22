@@ -1,115 +1,149 @@
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
 
 
 public class Main {
-    public static void main(String[] args) {
-
-        if (args.length != 3) {
-            System.err.println("Usage: java Main <k> <train file> <test file>");
-        }
-        int k = Integer.parseInt(args[0]);
-        String trainFile = args[1];
-        String testFile = args[2];
-
-        List<Point> train = readPoint(trainFile);
-        List<Point> test = readPoint(testFile);
-
-
-        double accuracy = testAcc(train, test, k);
-        System.out.println("Accuracy: " + accuracy);
+    public static void main(String[] args) throws Exception {
 
         Scanner sc = new Scanner(System.in);
-        System.out.print("Enter vectors (comma separated): ");
 
-        while (true) {
+        System.out.print("Assign value to knn: ");
+        int k = Integer.parseInt(sc.nextLine());
 
-            String input = sc.nextLine();
+        System.out.print("(1) test your own vector. (2) test a set of vectors: ");
+        String choice = sc.nextLine();
 
-            if (input.equalsIgnoreCase("exit"))
-                break;
-
-            String[] parts = input.split(",");
-            double[] features = new double[parts.length];
-
+        if (choice.equals("1")) {
+            System.out.print("Enter value to test your own vector: ");
+            String[] parts = sc.nextLine().split(",");
+            double[] testVector = new double[parts.length];
             for (int i = 0; i < parts.length; i++) {
-                features[i] = Double.parseDouble(parts[i]);
+                testVector[i] = Double.parseDouble(parts[i]);
             }
 
-            Point newPoint = new Point(features, "");
-            String prediction = classifier(newPoint, train, k);
 
-            System.out.println("Predicted class: " + prediction);
-        }
+            System.out.print("Provide a training file: ");
+            String trainFile = sc.nextLine();
 
-        sc.close();
-    }
-    // Distance uses Euclidean distance tutorial 2. sqrt((X1 - Y1)^2 + (X2 - Y2)^2...)
-    static double distance(double[] a, double[] b) {
-        double sum = 0;
+            String result = calculateDistance(testVector, trainFile, k);
+            System.out.println("Predicted flower: " + result);
+        } else if (choice.equals("2")) {
+            System.out.print("Provide a file to test: ");
+            String testFile = sc.nextLine();
 
-        for (int i = 0; i < a.length; i++) {
-            double difference = a[i] - b[i];
-            sum += difference * difference;
-        }
-        return Math.sqrt(sum);
-    }
+            System.out.print("Provide a training file: ");
+            String trainFile = sc.nextLine();
 
+            BufferedReader testReader = new BufferedReader(new FileReader(testFile));
 
-    // Retrieve features = the numeric numbers and the label = at the end of the cvs line
-    static List<Point> readPoint(String filename) {
-        List<Point> Point = new ArrayList<>();
-        try(BufferedReader br = new BufferedReader(new FileReader(filename))) {
+            int correct = 0;
+            int total = 0;
+
             String line;
-            while( (line = br.readLine()) != null) {
+            while ((line = testReader.readLine()) != null) {
                 String[] parts = line.split(",");
+                if (parts.length < 2) {
+                    continue;
+                }
+
                 double[] features = new double[parts.length - 1];
                 for (int i = 0; i < parts.length - 1; i++) {
                     features[i] = Double.parseDouble(parts[i]);
                 }
-                String label = parts[parts.length - 1];
-                Point.add(new Point(features, label));
 
+                String actualLabel = parts[parts.length - 1];
+                String predicted = calculateDistance(features, trainFile, k);
+                System.out.println("\nchecking vector: " + Arrays.toString(parts));
+                System.out.println("Predicted flower: " + predicted);
+                if (predicted.equals(actualLabel)) {
+                    System.out.println("Occurency");
+                    correct++;
+                }
+                total++;
             }
-            br.close();
-            return Point;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+            testReader.close();
+            System.out.println("Correct answer: " + correct);
+            System.out.println("Accuracy: " + (double) correct / (double) total);
         }
-
+        sc.close();
     }
+    // Distance uses Euclidean distance tutorial 2. sqrt((X1 - Y1)^2 + (X2 - Y2)^2...)
+    static String calculateDistance(double[] testVector, String trainFile, int k) throws Exception {
 
-    static String classifier(Point test, List<Point> trainSet, int k) {
-        List<Neigbor> neighbors = new ArrayList<>();
+        BufferedReader reader = new BufferedReader(new FileReader(trainFile));
 
-        for (Point d : trainSet) {
-            double distance = distance(test.features, d.features);
-            neighbors.add(new Neigbor(distance, d.labels));
+        // stores (distance, id) -> label
+        Map<String, String> smallest = new HashMap<>();
 
+        int vectorId = 0;
+        String line;
+
+        while ((line = reader.readLine()) != null) {
+
+            String[] parts = line.split(",");
+            if (parts.length < 2) continue;
+
+            double distance = 0.0;
+
+            // compute squared distance (NO sqrt like Python)
+            for (int i = 0; i < parts.length - 1; i++) {
+                double val = Double.parseDouble(parts[i]);
+                double diff = testVector[i] - val;
+                distance += diff * diff;
+            }
+
+            String label = parts[parts.length - 1];
+
+            String key = distance + "_" + vectorId;
+
+            if (smallest.size() < k) {
+                smallest.put(key, label);
+            } else {
+
+                // find largest stored distance
+                String maxKey = null;
+                double maxDist = -1;
+
+                for (String kkey : smallest.keySet()) {
+                    double d = Double.parseDouble(kkey.split("_")[0]);
+                    if (d > maxDist) {
+                        maxDist = d;
+                        maxKey = kkey;
+                    }
+                }
+
+                if (distance < maxDist) {
+                    smallest.remove(maxKey);
+                    smallest.put(key, label);
+                }
+            }
+
+            vectorId++;
         }
-        neighbors.sort(Comparator.comparingDouble(n -> n.distance));
 
+        reader.close();
 
+        // voting
+        Map<String, Integer> count = new HashMap<>();
 
-        Map<String, Integer> labels = new HashMap<>();
-        for (int i = 0; i < k; i++) {
-            String label = neighbors.get(i).labels;
-             labels.put(label, labels.getOrDefault(label, 0) + 1);
+        for (String label : smallest.values()) {
+            count.put(label, count.getOrDefault(label, 0) + 1);
         }
 
-        return Collections.max(labels.entrySet(), Map.Entry.comparingByValue()).getKey();
-    }
+        // find winner
+        String winner = null;
+        int max = -1;
 
-    static double testAcc(List<Point> train, List<Point> test, int k) {
-        int correct = 0;
-        for (Point d : test) {
-            String predicted = classifier(d, train, k);
-            if (predicted.equals(d.labels)) {
-                correct++;
+        for (Map.Entry<String, Integer> entry : count.entrySet()) {
+            if (entry.getValue() > max) {
+                max = entry.getValue();
+                winner = entry.getKey();
             }
         }
-        return (double) correct / test.size();
+
+        return winner;
     }
 }
