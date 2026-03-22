@@ -75,7 +75,7 @@ public class Main {
 
         BufferedReader reader = new BufferedReader(new FileReader(trainFile));
 
-        // stores (distance, id) -> label
+
         Map<String, String> smallest = new HashMap<>();
 
         int vectorId = 0;
@@ -88,7 +88,7 @@ public class Main {
 
             double distance = 0.0;
 
-            // compute squared distance (NO sqrt like Python)
+
             for (int i = 0; i < parts.length - 1; i++) {
                 double val = Double.parseDouble(parts[i]);
                 double diff = testVector[i] - val;
