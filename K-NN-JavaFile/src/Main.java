@@ -29,7 +29,7 @@ public class Main {
             String trainFile = sc.nextLine();
 
             String result = calculateDistance(testVector, trainFile, k);
-            System.out.println("Predicted flower: " + result);
+            System.out.println("Predicted: " + result);
         } else if (choice.equals("2")) {
             System.out.print("Provide a file to test: ");
             String testFile = sc.nextLine();
@@ -57,7 +57,7 @@ public class Main {
                 String actualLabel = parts[parts.length - 1];
                 String predicted = calculateDistance(features, trainFile, k);
                 System.out.println("\nchecking vector: " + Arrays.toString(parts));
-                System.out.println("Predicted flower: " + predicted);
+                System.out.println("Predicted: " + predicted);
                 if (predicted.equals(actualLabel)) {
                     System.out.println("Occurency");
                     correct++;
